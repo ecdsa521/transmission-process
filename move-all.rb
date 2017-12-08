@@ -13,13 +13,19 @@ tc.all.each_slice(5) do |ids|
             #it is already in proper directory.
             next
         end
-
-        if t["status"] == 4 || t["status"] == 2
+        
+        #                                                       paused
+        if t["status"] == 4 || t["status"] == 3 || t["status"] == 2
             puts "Will not modify unfinished torrents: #{t["name"]} #{t["status"]}" 
             next
         end
 
         if t["error"] != 0
+            if t["errorString"].match(/Unregistered.torrent/)
+                puts "Removing unregistered torrent #{t["name"]}"
+                tc.delete(t["id"], true)
+                next
+            end
             puts "Skipping #{t["name"]} due to error #{t["error"]}: #{t["errorString"]}"
             next
         end
