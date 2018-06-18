@@ -9,6 +9,16 @@ tc.all.each_slice(5) do |ids|
 
     data = tc.get(ids)
     data["arguments"]["torrents"].each do |t|
+        if t["error"] != 0
+            if t["errorString"].match(/Unregistered.torrent/)
+                puts "Removing unregistered torrent #{t["name"]}"
+                tc.delete(t["id"], true)
+                next
+            end
+            puts "Skipping #{t["name"]} due to error #{t["error"]}: #{t["errorString"]}"
+            next
+        end
+
         if t["downloadDir"].match(Regexp.new(@destination)) 
             #it is already in proper directory.
             next
@@ -19,16 +29,7 @@ tc.all.each_slice(5) do |ids|
             puts "Will not modify unfinished torrents: #{t["name"]} #{t["status"]}" 
             next
         end
-
-        if t["error"] != 0
-            if t["errorString"].match(/Unregistered.torrent/)
-                puts "Removing unregistered torrent #{t["name"]}"
-                tc.delete(t["id"], true)
-                next
-            end
-            puts "Skipping #{t["name"]} due to error #{t["error"]}: #{t["errorString"]}"
-            next
-        end
+        
         path = tc.get_tracker_path(t)
         puts "Moving #{t["name"]} from #{t["downloadDir"]} to #{@destination}/#{path}/"
         
